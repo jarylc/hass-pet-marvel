@@ -40,7 +40,7 @@ async def async_setup_entry(
         NeakasaSensor(coordinator, device_info, translation="wifi_rssi", key="wifiRssi", unit=SIGNAL_STRENGTH_DECIBELS, visible=False, category=EntityCategory.DIAGNOSTIC, icon="mdi:wifi"),
         NeakasaSensor(coordinator, device_info, translation="stay_time", key="stayTime", unit=UnitOfTime.SECONDS, visible=False),
         NeakasaTimestampSensor(coordinator, device_info, translation="last_usage", key="lastUse"),
-        NeakasaMapSensor(coordinator, device_info, translation="current_status", key="bucketStatus", options=['idle', 'cleaning', 'cleaning', 'leveling', 'flipover', 'cat_present'], icon="mdi:state-machine"),
+        NeakasaMapSensor(coordinator, device_info, translation="current_status", key="bucketStatus", options=['idle', 'cleaning', 'cleaning', 'leveling', 'flipover', 'cat_present', 'paused', 'side_bin_locking_panels_missing', None, 'cleaning_interrupted'], icon="mdi:state-machine"),
         NeakasaMapSensor(coordinator, device_info, translation="sand_state", key="sandLevelState", options=['insufficient', 'moderate', 'sufficient', 'overfilled']),
         NeakasaMapSensor(coordinator, device_info, translation="bin_state", key="room_of_bin", options=['normal', 'full', 'missing'], icon="mdi:delete")
     ]
@@ -152,10 +152,15 @@ class NeakasaMapSensor(CoordinatorEntity):
     
     @property
     def state(self):
-        value = getattr(self.coordinator.data, self.data_key)
-        if value >= len(self.key_options):
-            return None
-        return self.key_options[value]
+        rawValue = getattr(self.coordinator.data, self.data_key)
+        if rawValue >= len(self.key_options):
+            return rawValue
+
+        value = self.key_options[rawValue]
+        if value is None:
+            return rawValue
+        
+        return value
 
 class NeakasaTimestampSensor(CoordinatorEntity):
     

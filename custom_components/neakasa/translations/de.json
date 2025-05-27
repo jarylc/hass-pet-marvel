@@ -63,7 +63,10 @@
                     "cleaning": "Reinigung",
                     "leveling": "Nivellierung",
                     "flipover": "Verkehrt Herum",
-                    "cat_present": "Katze anwesend"
+                    "cat_present": "Katze anwesend",
+                    "paused": "Angehalten",
+                    "side_bin_locking_panels_missing": "Seitliche Verriegelungspaneele fehlen",
+                    "cleaning_interrupted": "Reinigung unterbrochen"
                 }
             },
             "sand_state": {

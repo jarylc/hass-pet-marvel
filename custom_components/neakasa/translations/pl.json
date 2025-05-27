@@ -60,7 +60,10 @@
                     "cleaning": "Czyszczenie",
                     "leveling": "Poziomowanie",
                     "flipover": "Do góry dnem",
-                    "cat_present": "Kot obecny"
+                    "cat_present": "Kot obecny",
+                    "paused": "Wstrzymano",
+                    "side_bin_locking_panels_missing": "Brakuje bocznych paneli blokujących pojemnik",
+                    "cleaning_interrupted": "Czyszczenie przerwane"
                 }
             },
             "sand_state": {

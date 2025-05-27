@@ -60,7 +60,10 @@
                     "cleaning": "Cleaning",
                     "leveling": "Leveling",
                     "flipover": "Upside Down",
-                    "cat_present": "Cat Present"
+                    "cat_present": "Cat Present",
+                    "paused": "Paused",
+                    "side_bin_locking_panels_missing": "Side bin locking panels missing",
+                    "cleaning_interrupted": "Cleaning interrupted"
                 }
             },
             "sand_state": {
