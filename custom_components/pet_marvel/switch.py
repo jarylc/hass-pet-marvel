@@ -1,28 +1,20 @@
 import logging
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorStateClass,
-)
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     STATE_ON,
     STATE_OFF,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import PERCENTAGE
 
-from .const import DOMAIN
-from .coordinator import NeakasaCoordinator
+from .const import DOMAIN, MANUFACTURER
+from .coordinator import PetMarvelCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -31,39 +23,69 @@ async def async_setup_entry(
 ):
     """Set up the Sensors."""
     # This gets the data update coordinator from hass.data as specified in your __init__.py
-    coordinator: NeakasaCoordinator = hass.data[DOMAIN][
+    coordinator: PetMarvelCoordinator = hass.data[DOMAIN][
         config_entry.entry_id
     ].coordinator
 
     device_info = DeviceInfo(
-        name=coordinator.devicename,
-        manufacturer="Neakasa",
-        identifiers={(DOMAIN, coordinator.deviceid)}
+        name=coordinator.device_name,
+        manufacturer=MANUFACTURER,
+        identifiers={(DOMAIN, coordinator.deviceid)},
     )
 
     # Enumerate all the sensors in your data value from your DataUpdateCoordinator and add an instance of your sensor class
     # to a list for each one.
     # This maybe different in your specific case, depending on how your data is structured
     sensors = [
-        NeakasaSwitch(coordinator, device_info, translation="auto_clean", key="cleanCfg", subkey="active", icon="mdi:vacuum"),
-        NeakasaSwitch(coordinator, device_info, translation="young_cat_mode", key="youngCatMode", visible=False, icon="mdi:cat"),
-        NeakasaSwitch(coordinator, device_info, translation="child_lock", key="childLockOnOff", icon="mdi:lock-alert"),
-        NeakasaSwitch(coordinator, device_info, translation="auto_bury", key="autoBury", icon="mdi:window-closed"),
-        NeakasaSwitch(coordinator, device_info, translation="auto_level", key="autoLevel", icon="mdi:spirit-level"),
-        NeakasaSwitch(coordinator, device_info, translation="silent_mode", key="silentMode", icon="mdi:volume-off"),
-        NeakasaSwitch(coordinator, device_info, translation="auto_recovery", key="autoForceInit", visible=False, icon="mdi:alert-outline"),
-        NeakasaSwitch(coordinator, device_info, translation="unstoppable_cycle", key="bIntrptRangeDet", icon="mdi:cached")
+        PetMarvelSwitch(
+            coordinator,
+            device_info,
+            translation="auto_clean",
+            key="AutoClean",
+            icon="mdi:vacuum",
+        ),
+        PetMarvelSwitch(
+            coordinator,
+            device_info,
+            translation="auto_bury",
+            key="DeepClean",
+            icon="mdi:shovel",
+        ),
+        PetMarvelSwitch(
+            coordinator,
+            device_info,
+            translation="device_lights",
+            key="LightSwitch",
+            icon="mdi:spotlight",
+        ),
+        PetMarvelSwitch(
+            coordinator,
+            device_info,
+            translation="small_cat_mode",
+            key="SmallCatMode",
+            icon="mdi:cat",
+            visible=False,
+        ),
     ]
 
     # Create the sensors.
     async_add_entities(sensors)
 
-class NeakasaSwitch(CoordinatorEntity):
-    
+
+class PetMarvelSwitch(CoordinatorEntity):
     _attr_should_poll = False
     _attr_has_entity_name = True
-    
-    def __init__(self, coordinator: NeakasaCoordinator, deviceinfo: DeviceInfo, translation: str, key: str, subkey: str = None, icon: str = None, visible: bool = True) -> None:
+
+    def __init__(
+        self,
+        coordinator: PetMarvelCoordinator,
+        deviceinfo: DeviceInfo,
+        translation: str,
+        key: str,
+        subkey: str = None,
+        icon: str = None,
+        visible: bool = True,
+    ) -> None:
         super().__init__(coordinator)
         self.device_info = deviceinfo
         self.data_key = key
@@ -77,23 +99,23 @@ class NeakasaSwitch(CoordinatorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         self.async_write_ha_state()
-    
-    async def async_turn_on(self, **kwargs):
+
+    async def async_turn_on(self):
         await self._set_state(1)
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self):
         await self._set_state(0)
 
     async def _set_state(self, state: int):
         """Helper to set device state."""
         if self.data_subkey is None:
-            await self.coordinator.setProperty(self.data_key, state)
+            await self.coordinator.set_property(self.data_key, state)
             return
 
         value = getattr(self.coordinator.data, self.data_key, None)
         value[self.data_subkey] = state
 
-        await self.coordinator.setProperty(self.data_key, value)
+        await self.coordinator.set_property(self.data_key, value)
 
     @property
     def is_on(self) -> bool:

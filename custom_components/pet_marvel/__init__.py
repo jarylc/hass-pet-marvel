@@ -1,22 +1,24 @@
-from __future__ import annotations
-
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .coordinator import PetMarvelCoordinator
 from .const import DOMAIN
-from .coordinator import NeakasaCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH, Platform.BUTTON]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.SWITCH,
+    Platform.BUTTON,
+]
 
 
 @dataclass
@@ -34,14 +36,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Initialise the coordinator that manages data updates from your api.
     # This is defined in coordinator.py
-    coordinator = NeakasaCoordinator(hass, config_entry)
+    coordinator = PetMarvelCoordinator(hass, config_entry)
 
     # Perform an initial data load from api.
     # async_config_entry_first_refresh() is special in that it does not log errors if it fails
     await coordinator.async_config_entry_first_refresh()
 
     # Test to see if api initialised correctly, else raise ConfigNotReady to make HA retry setup
-    # TODO: Change this to match how your api will know if connected or successful update
     if not coordinator.api.connected:
         raise ConfigEntryNotReady
 
@@ -56,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Setup platforms (based on the list of entity types in PLATFORMS defined above)
     # This calls the async_setup method in each of your entity type files.
-    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS);
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     # Return true to denote a successful setup.
     return True

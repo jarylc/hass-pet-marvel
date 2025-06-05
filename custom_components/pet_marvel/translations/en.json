@@ -1,0 +1,99 @@
+{
+    "title": "Pet Marvel",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Pet Marvel Setup",
+                "description": "Enter your Pet Marvel credentials.",
+                "data": {
+                    "country": "Country",
+                    "email": "Email",
+                    "password": "Password"
+                }
+            },
+            "device": {
+                "description": "Select one of the available device IDs.",
+                "data": {
+                    "device_id": "Device ID"
+                }
+            }
+        },
+        "abort": {
+            "connection": "Error during connection.",
+            "authentication": "Error during authentication.",
+            "unknown": "Unknown error."
+        }
+    },
+    "entity": {
+        "button": {
+            "clean": {
+                "name": "Clean"
+            },
+            "level": {
+                "name": "Level"
+            },
+            "dump": {
+                "name": "Dump"
+            }
+        },
+        "binary_sensor": {
+            "lid_installed": {
+                "name": "Lid installed"
+            },
+            "bin_inserted": {
+                "name": "Bin inserted"
+            },
+            "bin_full": {
+                "name": "Bin full"
+            }
+        },
+        "sensor": {
+            "last_usage": {
+                "name": "Last usage"
+            },
+            "status": {
+                "name": "Status",
+                "state": {
+                    "idle": "Idle",
+                    "cleaning": "Cleaning",
+                    "cleaning_complete": "Cleaning complete",
+                    "dumping": "Dumping",
+                    "dumping_complete": "Dumping complete",
+                    "resetting": "Resetting",
+                    "resetting_complete": "Resetting complete",
+                    "paused": "Paused",
+                    "cat_approaching": "Cat approaching",
+                    "cat_entering": "Cat entering"
+                }
+            },
+            "error_status": {
+                "name": "Error status",
+                "state": {
+                    "normal": "Normal",
+                    "motor_failure": "Motor failure",
+                    "magnet_clean_abnormal": "Cleaning magnet sensor failure",
+                    "magnet_idle_abnormal": "Idle magnet sensor failure",
+                    "weight_abnormal": "Weight sensor failure",
+                    "weight_high": "Weight sensor overloaded"
+                }
+            },
+            "software_version": {
+                "name": "Software version"
+            }
+        },
+        "switch": {
+            "auto_clean": {
+                "name": "Auto clean"
+            },
+            "auto_bury": {
+                "name": "Auto bury"
+            },
+            "device_lights": {
+                "name": "Device lights"
+            },
+            "small_cat_mode": {
+                "name": "Small cat mode (<1.5kg)"
+            }
+        }
+    }
+}

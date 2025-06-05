@@ -9,13 +9,16 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import PERCENTAGE, SIGNAL_STRENGTH_DECIBELS, UnitOfTime, EntityCategory, UnitOfMass
+from homeassistant.const import (
+    UnitOfMass,
+)
 from datetime import datetime
 
-from .const import DOMAIN
-from .coordinator import NeakasaCoordinator
+from .const import DOMAIN, MANUFACTURER
+from .coordinator import PetMarvelCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -24,49 +27,106 @@ async def async_setup_entry(
 ):
     """Set up the Sensors."""
     # This gets the data update coordinator from hass.data as specified in your __init__.py
-    coordinator: NeakasaCoordinator = hass.data[DOMAIN][
+    coordinator: PetMarvelCoordinator = hass.data[DOMAIN][
         config_entry.entry_id
     ].coordinator
     device_info = DeviceInfo(
-        name=coordinator.devicename,
-        manufacturer="Neakasa",
-        identifiers={(DOMAIN, coordinator.deviceid)}
+        name=coordinator.device_name,
+        manufacturer=MANUFACTURER,
+        identifiers={(DOMAIN, coordinator.deviceid)},
     )
     # Enumerate all the sensors in your data value from your DataUpdateCoordinator and add an instance of your sensor class
     # to a list for each one.
     # This maybe different in your specific case, depending on how your data is structured
-    sensors = [
-        NeakasaSensor(coordinator, device_info, translation="sand_percent", key="sandLevelPercent", unit=PERCENTAGE),
-        NeakasaSensor(coordinator, device_info, translation="wifi_rssi", key="wifiRssi", unit=SIGNAL_STRENGTH_DECIBELS, visible=False, category=EntityCategory.DIAGNOSTIC, icon="mdi:wifi"),
-        NeakasaSensor(coordinator, device_info, translation="stay_time", key="stayTime", unit=UnitOfTime.SECONDS, visible=False),
-        NeakasaTimestampSensor(coordinator, device_info, translation="last_usage", key="lastUse"),
-        NeakasaMapSensor(coordinator, device_info, translation="current_status", key="bucketStatus", options=['idle', 'cleaning', 'cleaning', 'leveling', 'flipover', 'cat_present', 'paused', 'side_bin_locking_panels_missing', None, 'cleaning_interrupted'], icon="mdi:state-machine"),
-        NeakasaMapSensor(coordinator, device_info, translation="sand_state", key="sandLevelState", options=['insufficient', 'moderate', 'sufficient', 'overfilled']),
-        NeakasaMapSensor(coordinator, device_info, translation="bin_state", key="room_of_bin", options=['normal', 'full', 'missing'], icon="mdi:delete")
+    sensors: list[CoordinatorEntity] = [
+        PetMarvelTimestampSensor(
+            coordinator,
+            device_info,
+            translation="last_usage",
+            key="last_usage",
+            icon="mdi:toilet",
+        ),
+        PetMarvelMapSensor(
+            coordinator,
+            device_info,
+            translation="status",
+            key="work_status",
+            options=[
+                "idle",
+                "cleaning",
+                "cleaning_complete",
+                "dumping",
+                "dumping_complete",
+                "resetting",
+                "resetting_complete",
+                "paused",
+                "cat_approaching",
+                "cat_entering",
+            ],
+            icon="mdi:state-machine",
+        ),
+        PetMarvelMapSensor(
+            coordinator,
+            device_info,
+            translation="error_status",
+            key="error_status",
+            options=[
+                "normal",
+                "motor_failure",
+                "magnet_clean_abnormal",
+                "magnet_idle_abnormal",
+                "weight_abnormal",
+                "weight_high",
+            ],
+            icon="mdi:alert",
+        ),
+        PetMarvelSensor(
+            coordinator,
+            device_info,
+            translation="software_version",
+            key="software_version",
+            icon="mdi:cellphone-arrow-down",
+            visible=False,
+        ),
     ]
 
-    for cat in coordinator.data.cat_list:
-        sensors.append(
-            NeakasaCatSensor(coordinator, device_info, catName=cat['name'], catId=cat['id'], icon="mdi:cat")
-        )
+    # for cat in coordinator.data.cat_list:
+    #     sensors.append(
+    #         PetMarvelCatSensor(
+    #             coordinator,
+    #             device_info,
+    #             catName=cat["name"],
+    #             catId=cat["id"],
+    #             icon="mdi:cat",
+    #         )
+    #     )
 
     # Create the sensors.
     async_add_entities(sensors)
 
-class NeakasaCatSensor(CoordinatorEntity):
-    
+
+class PetMarvelCatSensor(CoordinatorEntity):
     _attr_should_poll = False
     _attr_has_entity_name = True
-    
-    def __init__(self, coordinator: NeakasaCoordinator, deviceinfo: DeviceInfo, catName: str, catId: str, icon: str = None, visible: bool = True, category: str = None) -> None:
+
+    def __init__(
+        self,
+        coordinator: PetMarvelCoordinator,
+        deviceinfo: DeviceInfo,
+        cat_name: str,
+        cat_id: str,
+        icon: str = None,
+        visible: bool = True,
+        category: str = None,
+    ) -> None:
         super().__init__(coordinator)
         self.device_info = deviceinfo
         self.entity_registry_enabled_default = visible
         self._attr_translation_key = "cat_sensor"
-        self._attr_translation_placeholders = {"name": catName}
-        self._attr_unique_id = f"{coordinator.deviceid}-cat-{catId}"
+        self._attr_translation_placeholders = {"name": cat_name}
+        self._attr_unique_id = f"{coordinator.deviceid}-cat-{cat_id}"
         self._attr_unit_of_measurement = UnitOfMass.KILOGRAMS
-        self._catId = catId
+        self._catId = cat_id
         if icon is not None:
             self._attr_icon = icon
         if category is not None:
@@ -75,18 +135,23 @@ class NeakasaCatSensor(CoordinatorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         self.async_write_ha_state()
-    
+
     @property
     def _records(self):
-        return list(filter(lambda record: record['cat_id'] == self._catId, self.coordinator.data.record_list))
+        return list(
+            filter(
+                lambda record: record["cat_id"] == self._catId,
+                self.coordinator.data.record_list,
+            )
+        )
 
     @property
     def state(self):
         if len(self._records) == 0:
             return 0
         last_record = self._records[0]
-        return last_record['weight']
-    
+        return last_record["weight"]
+
     @property
     def extra_state_attributes(self):
         if len(self._records) == 0:
@@ -94,16 +159,26 @@ class NeakasaCatSensor(CoordinatorEntity):
         last_record = self._records[0]
         return {
             "state_class": SensorStateClass.MEASUREMENT,
-            "start_time": datetime.fromtimestamp(last_record['start_time']),
-            "end_time": datetime.fromtimestamp(last_record['end_time'])
+            "start_time": datetime.fromtimestamp(last_record["start_time"]),
+            "end_time": datetime.fromtimestamp(last_record["end_time"]),
         }
 
-class NeakasaSensor(CoordinatorEntity):
-    
+
+class PetMarvelSensor(CoordinatorEntity):
     _attr_should_poll = False
     _attr_has_entity_name = True
-    
-    def __init__(self, coordinator: NeakasaCoordinator, deviceinfo: DeviceInfo, translation: str, key: str, unit: str, icon: str = None, visible: bool = True, category: str = None) -> None:
+
+    def __init__(
+        self,
+        coordinator: PetMarvelCoordinator,
+        deviceinfo: DeviceInfo,
+        translation: str,
+        key: str,
+        unit: str = "",
+        icon: str = None,
+        visible: bool = True,
+        category: str = None,
+    ) -> None:
         super().__init__(coordinator)
         self.device_info = deviceinfo
         self.data_key = key
@@ -119,23 +194,30 @@ class NeakasaSensor(CoordinatorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         self.async_write_ha_state()
-    
+
     @property
     def state(self):
         return getattr(self.coordinator.data, self.data_key)
-    
+
     @property
     def extra_state_attributes(self):
-        return {
-            "state_class": SensorStateClass.MEASUREMENT
-        }
+        return {"state_class": SensorStateClass.MEASUREMENT}
 
-class NeakasaMapSensor(CoordinatorEntity):
-    
+
+class PetMarvelMapSensor(CoordinatorEntity):
     _attr_should_poll = False
     _attr_has_entity_name = True
-    
-    def __init__(self, coordinator: NeakasaCoordinator, deviceinfo: DeviceInfo, translation: str, key: str, options: list, icon: str = None, visible: bool = True) -> None:
+
+    def __init__(
+        self,
+        coordinator: PetMarvelCoordinator,
+        deviceinfo: DeviceInfo,
+        translation: str,
+        key: str,
+        options: list,
+        icon: str = None,
+        visible: bool = True,
+    ) -> None:
         super().__init__(coordinator)
         self.device_info = deviceinfo
         self.data_key = key
@@ -149,26 +231,34 @@ class NeakasaMapSensor(CoordinatorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         self.async_write_ha_state()
-    
+
     @property
     def state(self):
-        rawValue = getattr(self.coordinator.data, self.data_key)
-        if rawValue >= len(self.key_options):
-            return rawValue
+        raw_value = getattr(self.coordinator.data, self.data_key)
+        if raw_value >= len(self.key_options):
+            return raw_value
 
-        value = self.key_options[rawValue]
+        value = self.key_options[raw_value]
         if value is None:
-            return rawValue
-        
+            return raw_value
+
         return value
 
-class NeakasaTimestampSensor(CoordinatorEntity):
-    
+
+class PetMarvelTimestampSensor(CoordinatorEntity):
     _attr_should_poll = False
     _attr_has_entity_name = True
     _attr_device_class = SensorDeviceClass.TIMESTAMP
-    
-    def __init__(self, coordinator: NeakasaCoordinator, deviceinfo: DeviceInfo, translation: str, key: str, icon: str = None, visible: bool = True) -> None:
+
+    def __init__(
+        self,
+        coordinator: PetMarvelCoordinator,
+        deviceinfo: DeviceInfo,
+        translation: str,
+        key: str,
+        icon: str = None,
+        visible: bool = True,
+    ) -> None:
         super().__init__(coordinator)
         self.device_info = deviceinfo
         self.data_key = key
@@ -181,7 +271,7 @@ class NeakasaTimestampSensor(CoordinatorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         self.async_write_ha_state()
-    
+
     @property
     def state(self):
         timestamp = getattr(self.coordinator.data, self.data_key) / 1000

@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from datetime import timedelta
 import logging
 from typing import Optional, Any, Awaitable, Callable
@@ -7,8 +6,11 @@ from datetime import datetime
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class ValueCacher:
-    def __init__(self, refresh_after: Optional[timedelta], discard_after: Optional[timedelta]):
+    def __init__(
+        self, refresh_after: Optional[timedelta], discard_after: Optional[timedelta]
+    ):
         """
         :param refresh_after:
             How long to wait before considering the cached value stale and needing refresh.
@@ -32,7 +34,7 @@ class ValueCacher:
 
     def set(self, value: Any) -> None:
         self._value = value
-        self._last_update = datetime.utcnow()
+        self._last_update = datetime.now()
         self._manually_marked_stale = False
 
     def clear(self) -> None:
@@ -55,7 +57,7 @@ class ValueCacher:
         if self._refresh_after is not None:
             if self._refresh_after <= timedelta(0):
                 return None
-            if datetime.utcnow() - self._last_update > self._refresh_after:
+            if datetime.now() - self._last_update > self._refresh_after:
                 return None
         return self._value
 
@@ -69,7 +71,7 @@ class ValueCacher:
         if self._discard_after is not None:
             if self._discard_after <= timedelta(0):
                 return None
-            if datetime.utcnow() - self._last_update > self._discard_after:
+            if datetime.now() - self._last_update > self._discard_after:
                 return None
         return self._value
 
