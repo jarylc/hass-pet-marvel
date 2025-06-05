@@ -1,12 +1,11 @@
 {
+  "domain": "pet_marvel",
+  "name": "Pet Marvel",
   "codeowners": ["@jarylc"],
   "config_flow": true,
-  "dependencies": [],
   "documentation": "https://github.com/jarylc/hass-pet-marvel",
-  "issue_tracker": "https://github.com/jarylc/hass-pet-marvel/issues",
-  "domain": "pet_marvel",
   "iot_class": "cloud_polling",
-  "name": "Pet Marvel",
+  "issue_tracker": "https://github.com/jarylc/hass-pet-marvel/issues",
   "requirements": [
     "alibabacloud_iot_api_gateway",
     "alibabacloud_tea_util"
