@@ -202,11 +202,16 @@ class PetMarvelAPI:
 
     async def _load_auth_tokens(self, country: str, email: str, password: str):
         path = "/app/v1/auth/login"
-        try:
-            ts, sign = self._sign(path)
-            async with self._session.post(
-                url=self._base_url + path,
-                json={
+        if country == "China":
+            json_c={
+                    "account": email,
+                    "area": VALID_COUNTRY_TO_CODE_MAPPING[country],
+                    "clientid": "",
+                    "password": password,
+                    "brand": "",
+                },
+        else:
+            json_c={
                     "account": email,
                     "account_type": 1,
                     "area": VALID_COUNTRY_TO_CODE_MAPPING[country],
@@ -214,6 +219,11 @@ class PetMarvelAPI:
                     "password": password,
                     "brand": "",
                 },
+        try:
+            ts, sign = self._sign(path)
+            async with self._session.post(
+                url=self._base_url + path,
+                json=json_c
                 headers={
                     "content-type": "application/json; charset=UTF-8",
                     "appid": self._app_id,
