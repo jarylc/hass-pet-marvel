@@ -36,12 +36,14 @@ class PetMarvelAPI:
         session: aiohttp.ClientSession,
         async_executor=async_add_executor_job,
         base_url="https://app.api.ap.nyhx.vip",
+        base2_url="https://app.api.nyhx.vip",
         app_id: str = "b0baae0630f444b0811ea3c2eb212171",
         app_key: str = "34280983",
         app_secret: str = "d342fca55b41d9b96490bda0c9c703b3",
         language="en-US",
     ) -> None:
         self._base_url = base_url
+        self._base2_url = base2_url
         self._app_id = app_id
         self._app_key = app_key
         self._app_secret = app_secret
@@ -209,7 +211,8 @@ class PetMarvelAPI:
                     "clientid": "",
                     "password": password,
                     "brand": "",
-                },
+                }
+            url = self._base2_url + path
         else:
             json_c={
                     "account": email,
@@ -218,12 +221,13 @@ class PetMarvelAPI:
                     "clientid": "",
                     "password": password,
                     "brand": "",
-                },
+                }
+            url=self._base_url + path
         try:
             ts, sign = self._sign(path)
             async with self._session.post(
-                url=self._base_url + path,
-                json=json_c
+                url=url,
+                json=json_c,
                 headers={
                     "content-type": "application/json; charset=UTF-8",
                     "appid": self._app_id,
