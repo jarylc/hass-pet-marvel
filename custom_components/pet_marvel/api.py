@@ -36,12 +36,14 @@ class PetMarvelAPI:
         session: aiohttp.ClientSession,
         async_executor=async_add_executor_job,
         base_url="https://app.api.ap.nyhx.vip",
+        base_cn_url="https://app.api.nyhx.vip",
         app_id: str = "b0baae0630f444b0811ea3c2eb212171",
         app_key: str = "34280983",
         app_secret: str = "d342fca55b41d9b96490bda0c9c703b3",
         language="en-US",
     ) -> None:
         self._base_url = base_url
+        self._base_cn_url = base_cn_url
         self._app_id = app_id
         self._app_key = app_key
         self._app_secret = app_secret
@@ -206,7 +208,7 @@ class PetMarvelAPI:
             ts, sign = self._sign(path)
             area = VALID_COUNTRY_TO_CODE_MAPPING[country]
             async with self._session.post(
-                url=self._base_url + path,
+                url=area == "86" and self._base_cn_url or self._base_url,
                 json={
                     "account": email,
                     "account_type": area == "86" and 0 or 1,
