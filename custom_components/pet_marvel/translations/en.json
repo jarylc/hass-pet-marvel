@@ -7,7 +7,7 @@
                 "description": "Enter your Pet Marvel credentials.",
                 "data": {
                     "country": "Country",
-                    "email": "Email",
+                    "email": "Email / Phone",
                     "password": "Password"
                 }
             },

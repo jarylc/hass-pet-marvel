@@ -204,12 +204,13 @@ class PetMarvelAPI:
         path = "/app/v1/auth/login"
         try:
             ts, sign = self._sign(path)
+            area = VALID_COUNTRY_TO_CODE_MAPPING[country]
             async with self._session.post(
                 url=self._base_url + path,
                 json={
                     "account": email,
-                    "account_type": 1,
-                    "area": VALID_COUNTRY_TO_CODE_MAPPING[country],
+                    "account_type": area == "86" and 0 or 1,
+                    "area": area,
                     "clientid": "",
                     "password": password,
                     "brand": "",
