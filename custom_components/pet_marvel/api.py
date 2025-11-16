@@ -208,10 +208,10 @@ class PetMarvelAPI:
             ts, sign = self._sign(path)
             area = VALID_COUNTRY_TO_CODE_MAPPING[country]
             async with self._session.post(
-                url=area == "86" and self._base_cn_url or self._base_url,
+                url=self._base_cn_url if area == "86" else self._base_url,
                 json={
                     "account": email,
-                    "account_type": area == "86" and 0 or 1,
+                    "account_type": 0 if area == "86" else 1,
                     "area": area,
                     "clientid": "",
                     "password": password,
